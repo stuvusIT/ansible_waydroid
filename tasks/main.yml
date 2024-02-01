@@ -1,2 +1,53 @@
 ---
 
+- name: Add Waydroid Key
+  apt_key:
+    url: https://repo.waydro.id/waydroid.gpg
+
+- name: Add Waydroid repo
+  apt_repository:
+    repo: "deb https://repo.waydro.id/ {{ ansible_distribution_release }} main"
+    filename: waydroid
+
+- name: Install required packages
+  package:
+    name:
+      - weston
+      - waydroid
+
+- name: Initialize Waydroid
+  command: 'waydroid init'
+
+- name: Create user for Weston
+  user:
+    name: weston
+
+- name: Create directory getty@tty1.service.d
+  file:
+    path: /etc/systemd/system/getty@tty1.service.d
+    state: directory
+
+- name: Place systemd dropin for autologin on TTY1
+  template:
+    src: weston-autologin.conf.j2
+    dest: /etc/systemd/system/getty@tty1.service.d/weston-autologin.conf
+
+- name: Place .profile for user weston
+  template:
+    src: .profile.j2
+    dest: /home/weston/.profile
+
+- name: Create directory /home/weston/.config
+  file:
+    path: /home/weston/.config
+    state: directory
+
+- name: Place weston.ini
+  template:
+    src: weston.ini.j2
+    dest: /home/weston/.config/weston.ini
+
+- name: Place start-waydroid.sh
+  template:
+    src: start-waydroid.sh.j2
+    dest: /usr/local/bin/start-waydroid.sh
